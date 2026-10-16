@@ -45,8 +45,30 @@ export interface SavedGuess {
   songId?: number;
 }
 
+const GUESS_RESULTS: readonly GuessResult[] = ["correct", "artist", "wrong", "skip"];
+
+/** Accepts one saved attempt in the current format or the first demo's format ({ result, id }). */
+function parseSavedGuess(value: unknown): SavedGuess | null {
+  if (typeof value !== "object" || value === null) return null;
+  const { result, songId, id } = value as { result?: unknown; songId?: unknown; id?: unknown };
+  if (!GUESS_RESULTS.includes(result as GuessResult)) return null;
+  const savedId = typeof songId === "number" ? songId : typeof id === "number" ? id : undefined;
+  return { result: result as GuessResult, songId: savedId };
+}
+
+/**
+ * Saved attempts for a day. Data written by older versions, or edited by hand, must never crash
+ * the page, so anything that doesn't look like a list of attempts counts as "no progress yet".
+ */
 export function loadDailyGame(day: number, category: Category): SavedGuess[] {
-  return read<SavedGuess[]>(KEYS.dailyGame(day, category)) ?? [];
+  const stored = read<unknown>(KEYS.dailyGame(day, category));
+  // The first demo saved { guesses: [...] } instead of a plain array.
+  const list = Array.isArray(stored)
+    ? stored
+    : Array.isArray((stored as { guesses?: unknown } | null)?.guesses)
+      ? (stored as { guesses: unknown[] }).guesses
+      : [];
+  return list.map(parseSavedGuess).filter((guess): guess is SavedGuess => guess !== null);
 }
 
 export function saveDailyGame(day: number, category: Category, guesses: SavedGuess[]): void {
@@ -57,8 +79,20 @@ export function saveDailyGame(day: number, category: Category, guesses: SavedGue
 
 const EMPTY_STATS: PlayerStats = { played: 0, wins: 0, streak: 0, bestStreak: 0, lastDay: 0 };
 
+const toCount = (value: unknown): number =>
+  typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : 0;
+
 export function loadStats(category: Category): PlayerStats {
-  return { ...EMPTY_STATS, ...read<PlayerStats>(KEYS.stats(category)) };
+  const stored = read<Record<string, unknown>>(KEYS.stats(category));
+  if (typeof stored !== "object" || stored === null) return { ...EMPTY_STATS };
+  return {
+    played: toCount(stored.played),
+    wins: toCount(stored.wins),
+    streak: toCount(stored.streak),
+    // The first demo called this field "best".
+    bestStreak: toCount(stored.bestStreak ?? stored.best),
+    lastDay: toCount(stored.lastDay),
+  };
 }
 
 /** Record a finished daily game once per day and category. Returns the updated stats. */

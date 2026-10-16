@@ -1,0 +1,28 @@
+.page {
+  max-width: 420px;
+  margin: 20vh auto 0;
+  padding-inline: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+}
+
+.text {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.button {
+  padding: 10px 24px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  font-weight: 600;
+}
