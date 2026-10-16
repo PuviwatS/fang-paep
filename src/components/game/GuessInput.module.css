@@ -1,0 +1,78 @@
+.bar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: start;
+}
+
+.search {
+  position: relative;
+  min-width: 0;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-line);
+  background: var(--color-panel);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.input::placeholder {
+  color: var(--color-muted);
+}
+
+/* Suggestions open upwards so the phone keyboard doesn't cover them. */
+.results {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 6px);
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  box-shadow: 0 -12px 30px rgb(0 0 0 / 0.45);
+}
+
+.result {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+  line-height: 1.3;
+}
+
+.result b {
+  font-weight: 600;
+}
+
+.result span {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.result:hover,
+.active {
+  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+.skip {
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-line);
+  background: transparent;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}

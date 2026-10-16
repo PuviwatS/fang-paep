@@ -1,0 +1,93 @@
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 3.4rem 1fr auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-panel);
+}
+
+.seconds {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.artistName {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  color: var(--color-ink);
+}
+
+/* ---- Row states ---- */
+
+.next {
+  border-color: var(--color-accent);
+}
+
+.skipped {
+  color: var(--color-muted);
+  border-style: dashed;
+}
+
+.correct {
+  border-color: var(--color-correct);
+  box-shadow: inset 4px 0 0 var(--color-correct);
+}
+
+.correct .tag {
+  background: var(--color-correct);
+}
+
+.artistMatch {
+  border-color: var(--color-artist);
+  box-shadow: inset 4px 0 0 var(--color-artist);
+}
+
+.artistMatch .tag {
+  background: var(--color-artist);
+}
+
+.wrong {
+  border-color: var(--color-wrong);
+  box-shadow: inset 4px 0 0 var(--color-wrong);
+}
+
+.wrong .tag {
+  background: var(--color-wrong);
+  color: var(--color-text);
+}

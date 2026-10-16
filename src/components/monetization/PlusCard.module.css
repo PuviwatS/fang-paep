@@ -1,0 +1,28 @@
+.card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-artist) 12%, var(--color-panel));
+}
+
+.name {
+  font-family: var(--font-display);
+}
+
+.perks {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.badge {
+  padding: 1px 8px;
+  border: 1px solid var(--color-artist);
+  border-radius: var(--radius-pill);
+  color: var(--color-artist);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
