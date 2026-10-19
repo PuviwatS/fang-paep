@@ -1,0 +1,54 @@
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 2.2em minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-line);
+  background: var(--color-panel);
+}
+
+.me {
+  border-color: var(--color-accent);
+}
+
+.rank {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.item:nth-child(-n + 3) .rank {
+  color: var(--color-artist);
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.you {
+  color: var(--color-accent);
+  font-size: 0.8rem;
+}
+
+.tries {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}

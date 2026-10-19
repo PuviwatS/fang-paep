@@ -24,7 +24,9 @@ function write(key: string, value: unknown): void {
 const KEYS = {
   helpSeen: "fp:seen-help",
   dailyGame: (day: number, category: Category) => `fp:day:${day}:${category}`,
+  dailyAnswer: (day: number, category: Category) => `fp:answer:${day}:${category}`,
   stats: (category: Category) => `fp:stats:${category}`,
+  imported: (userId: string) => `fp:imported:${userId}`,
 };
 
 // ---- First-visit help -------------------------------------------------------
@@ -73,6 +75,53 @@ export function loadDailyGame(day: number, category: Category): SavedGuess[] {
 
 export function saveDailyGame(day: number, category: Category, guesses: SavedGuess[]): void {
   write(KEYS.dailyGame(day, category), guesses);
+}
+
+/** The revealed answer of a finished guest round, so a reload can show it again. */
+export function loadDailyAnswer<T>(day: number, category: Category): T | null {
+  return read<T>(KEYS.dailyAnswer(day, category));
+}
+
+export function saveDailyAnswer(day: number, category: Category, answer: unknown): void {
+  write(KEYS.dailyAnswer(day, category), answer);
+}
+
+export interface LocalGame {
+  day: number;
+  category: Category;
+  guesses: { songId: number | null }[];
+}
+
+const CATEGORY_KEYS: readonly Category[] = ["all", "pop", "rock", "luk", "hiphop"];
+
+/** Finished daily rounds played in this browser, for importing into a new account. */
+export function listFinishedLocalGames(): LocalGame[] {
+  const games: LocalGame[] = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const match = /^fp:day:(\d+):(\w+)$/.exec(localStorage.key(i) ?? "");
+      if (!match) continue;
+      const day = Number(match[1]);
+      const category = match[2] as Category;
+      if (!CATEGORY_KEYS.includes(category)) continue;
+      const guesses = loadDailyGame(day, category);
+      const finished = guesses.some((g) => g.result === "correct") || guesses.length >= 6;
+      if (finished) {
+        games.push({ day, category, guesses: guesses.map((g) => ({ songId: g.songId ?? null })) });
+      }
+    }
+  } catch {
+    // Storage unavailable: nothing to import.
+  }
+  return games;
+}
+
+export function hasImportedLocalGames(userId: string): boolean {
+  return read<boolean>(KEYS.imported(userId)) === true;
+}
+
+export function markLocalGamesImported(userId: string): void {
+  write(KEYS.imported(userId), true);
 }
 
 // ---- Stats ------------------------------------------------------------------

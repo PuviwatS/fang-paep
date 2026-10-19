@@ -10,11 +10,19 @@ interface PreviewState {
   error: string | null;
 }
 
-/** Look up the preview audio for a track whenever the track changes. */
-export function usePreview(trackId: number): PreviewState {
-  const [state, setState] = useState<PreviewState>({ preview: null, isLoading: true, error: null });
+/** Look up a track's preview audio on iTunes (practice mode). Pass null to skip the lookup. */
+export function usePreview(trackId: number | null): PreviewState {
+  const [state, setState] = useState<PreviewState>({
+    preview: null,
+    isLoading: trackId !== null,
+    error: null,
+  });
 
   useEffect(() => {
+    if (trackId === null) {
+      setState({ preview: null, isLoading: false, error: null });
+      return;
+    }
     let cancelled = false;
     setState({ preview: null, isLoading: true, error: null });
 

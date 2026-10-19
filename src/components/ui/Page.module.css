@@ -1,0 +1,192 @@
+/* Shared building blocks for the non-game pages (login, account, pricing...). */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.lead {
+  margin: -8px 0 0;
+  color: var(--color-muted);
+  text-wrap: pretty;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-line);
+  background: var(--color-panel);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.muted {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-line);
+  background: var(--color-ink);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.input:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.button,
+.ghostButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ghostButton {
+  border-color: var(--color-line);
+  background: transparent;
+  font-weight: 500;
+}
+
+.button:disabled,
+.ghostButton:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.link {
+  color: var(--color-text);
+}
+
+.error,
+.notice,
+.success {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+}
+
+.error {
+  background: color-mix(in srgb, var(--color-wrong) 18%, transparent);
+  border: 1px solid var(--color-wrong);
+}
+
+.notice {
+  background: color-mix(in srgb, var(--color-artist) 14%, transparent);
+  border: 1px solid var(--color-artist);
+}
+
+.success {
+  background: color-mix(in srgb, var(--color-correct) 16%, transparent);
+  border: 1px solid var(--color-correct);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tab {
+  flex: 1 0 auto;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tabActive {
+  background: var(--color-ink);
+  color: var(--color-text);
+}
+
+.badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-artist);
+  color: var(--color-ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  text-align: center;
+}
+
+.statValue {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.statLabel {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}

@@ -1,4 +1,4 @@
-import { ARTIST_ALIASES, SONGS, shortTitle } from "./songs";
+import { shortTitle } from "./songs";
 import type { Song } from "./types";
 
 /** Lowercase and drop spaces and punctuation, keeping Thai letters, Latin letters and digits. */
@@ -12,11 +12,19 @@ interface SearchEntry {
   artistKeys: string[];
 }
 
-const SEARCH_INDEX: SearchEntry[] = SONGS.map((song) => ({
-  song,
-  titleKeys: [song.title, shortTitle(song.title)].map(normalize),
-  artistKeys: [song.artist, ...(ARTIST_ALIASES[song.artist] ?? [])].map(normalize),
-}));
+export type SearchIndex = readonly SearchEntry[];
+
+/** Pre-normalise every title and artist name once, so each keystroke only compares strings. */
+export function createSearchIndex(
+  songs: readonly Song[],
+  artistAliases: Readonly<Record<string, readonly string[]>>,
+): SearchIndex {
+  return songs.map((song) => ({
+    song,
+    titleKeys: [song.title, shortTitle(song.title)].map(normalize),
+    artistKeys: [song.artist, ...(artistAliases[song.artist] ?? [])].map(normalize),
+  }));
+}
 
 /** Higher is better. A title match beats an artist match; a prefix match beats a match anywhere. */
 const SCORE = {
@@ -39,11 +47,17 @@ function scoreEntry(entry: SearchEntry, query: string): number {
  * Find songs by Thai or English title, artist name or Thai artist alias.
  * Songs in `excludeIds` (already guessed) are left out.
  */
-export function searchSongs(query: string, excludeIds: ReadonlySet<number>, limit = 8): Song[] {
+export function searchSongs(
+  index: SearchIndex,
+  query: string,
+  excludeIds: ReadonlySet<number>,
+  limit = 8,
+): Song[] {
   const normalizedQuery = normalize(query);
   if (!normalizedQuery) return [];
 
-  return SEARCH_INDEX.filter((entry) => !excludeIds.has(entry.song.id))
+  return index
+    .filter((entry) => !excludeIds.has(entry.song.id))
     .map((entry) => ({ song: entry.song, score: scoreEntry(entry, normalizedQuery) }))
     .filter((match) => match.score > SCORE.none)
     .sort((a, b) => b.score - a.score || a.song.title.localeCompare(b.song.title, "th"))

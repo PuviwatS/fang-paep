@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type KeyboardEvent } from "react";
+import { useSongCatalog } from "@/components/providers/SongCatalogProvider";
 import { SNIPPET_SECONDS } from "@/lib/constants";
 import { searchSongs } from "@/lib/search";
 import type { Song } from "@/lib/types";
@@ -11,17 +12,24 @@ interface GuessInputProps {
   attemptsUsed: number;
   /** Songs already guessed, hidden from the suggestions. */
   guessedIds: ReadonlySet<number>;
+  /** True while a guess is being checked. */
+  disabled?: boolean;
   onGuess: (song: Song) => void;
   onSkip: () => void;
 }
 
 /** Search box with keyboard-navigable suggestions, plus the skip button. */
-export function GuessInput({ attemptsUsed, guessedIds, onGuess, onSkip }: GuessInputProps) {
+export function GuessInput({ attemptsUsed, guessedIds, disabled = false, onGuess, onSkip }: GuessInputProps) {
+  const { searchIndex } = useSongCatalog();
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
-  const results = useMemo(() => searchSongs(query, guessedIds), [query, guessedIds]);
+  const results = useMemo(
+    () => searchSongs(searchIndex, query, guessedIds),
+    [searchIndex, query, guessedIds],
+  );
 
   function choose(song: Song) {
+    if (disabled) return;
     onGuess(song);
     setQuery("");
     setActiveIndex(0);
@@ -79,7 +87,7 @@ export function GuessInput({ attemptsUsed, guessedIds, onGuess, onSkip }: GuessI
         )}
       </div>
 
-      <button className={styles.skip} onClick={onSkip} data-testid="skip">
+      <button className={styles.skip} onClick={onSkip} disabled={disabled} data-testid="skip">
         {isLastAttempt ? "ยอมแพ้" : `ข้าม (+${extraSeconds} วิ)`}
       </button>
     </div>

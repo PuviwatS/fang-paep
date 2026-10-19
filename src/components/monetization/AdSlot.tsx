@@ -12,7 +12,7 @@ export function AdSlot({ width = 320, height = 100 }: AdSlotProps) {
       <span>
         พื้นที่โฆษณา {width}×{height}
       </span>
-      <small className={styles.hint}>ตัวอย่างตำแหน่ง AdSense / Ad Manager</small>
+      <small className={styles.hint}>เว้นไว้สำหรับ AdSense / Ad Manager</small>
     </div>
   );
 }

@@ -1,41 +1,46 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import type { Answer } from "@/lib/api/types";
 import { SNIPPET_SECONDS } from "@/lib/constants";
 import { msUntilNextDay } from "@/lib/daily";
 import { formatDuration, formatPercent } from "@/lib/format";
 import { buildShareText } from "@/lib/scoring";
-import type { Category, GameMode, Guess, PlayerStats, Preview, Song } from "@/lib/types";
+import type { Category, GameMode, Guess, PlayerStats } from "@/lib/types";
 import styles from "./ResultCard.module.css";
 
 interface ResultCardProps {
-  answer: Song;
-  preview: Preview | null;
+  answer: Answer | null;
   guesses: readonly Guess[];
   won: boolean;
   mode: GameMode;
-  day: number;
+  /** Daily game number; null in practice. */
+  day: number | null;
+  isToday: boolean;
   category: Category;
   stats: PlayerStats | null;
+  loggedIn: boolean;
   onNextSong: () => void;
 }
 
 /** Shown when the round ends: reveals the song, offers sharing and a link to the full track. */
 export function ResultCard({
   answer,
-  preview,
   guesses,
   won,
   mode,
   day,
+  isToday,
   category,
   stats,
+  loggedIn,
   onNextSong,
 }: ResultCardProps) {
   const [copied, setCopied] = useState(false);
 
   async function share() {
-    const text = buildShareText(day, category, guesses);
+    const text = buildShareText(day ?? 0, category, guesses);
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
@@ -53,9 +58,9 @@ export function ResultCard({
       aria-live="polite"
       data-testid="result"
     >
-      {preview?.artworkUrl && (
+      {answer?.artworkUrl && (
         // eslint-disable-next-line @next/next/no-img-element -- remote iTunes artwork, no need for next/image here
-        <img className={styles.artwork} src={preview.artworkUrl} alt="" width={96} height={96} />
+        <img className={styles.artwork} src={answer.artworkUrl} alt="" width={96} height={96} />
       )}
 
       <div className={styles.body}>
@@ -63,29 +68,46 @@ export function ResultCard({
           {heading}
         </p>
         <h2 className={styles.title} data-testid="result-title">
-          {answer.title}
+          {answer?.title ?? "…"}
         </h2>
-        <p className={styles.meta}>
-          {answer.artist} · {answer.year}
-        </p>
+        {answer && (
+          <p className={styles.meta}>
+            {answer.artist}
+            {answer.year ? ` · ${answer.year}` : ""}
+          </p>
+        )}
 
         <div className={styles.actions}>
-          <button className={styles.primary} onClick={share}>
-            {copied ? "คัดลอกผลแล้ว" : "แชร์ผล"}
-          </button>
-          {mode === "practice" && <button onClick={onNextSong}>เพลงถัดไป</button>}
-          {preview?.trackUrl && (
-            <a href={preview.trackUrl} target="_blank" rel="noreferrer">
+          {mode === "daily" && (
+            <button className={styles.primary} onClick={share}>
+              {copied ? "คัดลอกผลแล้ว" : "แชร์ผล"}
+            </button>
+          )}
+          {mode === "practice" && (
+            <button className={styles.primary} onClick={onNextSong}>
+              เพลงถัดไป
+            </button>
+          )}
+          {mode === "daily" && isToday && (
+            <Link href={`/leaderboard?category=${category}`}>ดูอันดับวันนี้</Link>
+          )}
+          {answer?.trackUrl && (
+            <a href={answer.trackUrl} target="_blank" rel="noreferrer">
               ฟังเต็มเพลงบน Apple Music
             </a>
           )}
         </div>
 
-        {mode === "daily" && (
+        {mode === "daily" && isToday && (
           <p className={styles.footnote}>
             {stats &&
               `เล่น ${stats.played} · ชนะ ${formatPercent(stats.wins, stats.played)} · สตรีค ${stats.streak} วัน · `}
             เพลงใหม่ในอีก {formatDuration(msUntilNextDay())}
+          </p>
+        )}
+        {mode === "daily" && isToday && !loggedIn && (
+          <p className={styles.footnote}>
+            <Link href="/login">เข้าสู่ระบบ</Link> เพื่อเก็บสถิติข้ามเครื่องและขึ้นอันดับ
           </p>
         )}
       </div>

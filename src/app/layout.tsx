@@ -1,5 +1,9 @@
 import type { Metadata, Viewport } from "next";
+import { SiteHeader } from "@/components/layout/SiteHeader";
+import { Providers } from "@/components/providers/Providers";
+import { SiteFooter } from "@/components/ui/SiteFooter";
 import "./globals.css";
+import styles from "./layout.module.css";
 
 export const metadata: Metadata = {
   title: "ฟังแป๊บ — ทายเพลงไทย",
@@ -25,7 +29,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Chakra+Petch:wght@500;600;700&display=swap"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <Providers>
+          <div className={styles.shell}>
+            <SiteHeader />
+            <main className={styles.main}>{children}</main>
+            <SiteFooter />
+          </div>
+        </Providers>
+      </body>
     </html>
   );
 }

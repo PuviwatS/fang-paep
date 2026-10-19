@@ -1,0 +1,47 @@
+.plans {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 480px) {
+  .plans {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.featured {
+  border-color: var(--color-accent);
+}
+
+.planHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.price {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.price span {
+  margin-left: 2px;
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.features {
+  margin: 0;
+  padding-left: 1.1em;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  font-size: 0.9rem;
+}

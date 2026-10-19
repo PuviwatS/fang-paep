@@ -74,3 +74,7 @@
   color: var(--color-muted);
   font-size: 0.8rem;
 }
+
+.footnote a {
+  color: var(--color-text);
+}
