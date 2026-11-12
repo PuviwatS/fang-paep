@@ -86,4 +86,4 @@ Railway deployment configuration and commands are documented in [docs/deployment
 
 ## Automatic Railway releases
 
-Both Railway application services track `PuviwatS/fang-paep` on `main`. A push to `main` automatically rebuilds and deploys both frontend and backend from the repository root. Keep the shared npm lockfile committed; service-specific build commands select the correct workspace. See [deployment settings](docs/deployment/railway.md).
+Both Railway application services track `PuviwatS/fang-paep` on `main`. Automatic rebuilds for both frontend and backend are pending the repository owner granting Railway GitHub access and verification of both push triggers. Keep the shared npm lockfile committed; service-specific build commands select the correct workspace. See [deployment settings](docs/deployment/railway.md).
