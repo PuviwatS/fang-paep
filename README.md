@@ -83,3 +83,7 @@ Existing Supabase data is not automatically transferred or deleted. Live cutover
 Run tests, lint, typecheck, formatting and both builds before submitting changes. PostgreSQL integration tests require `TEST_DATABASE_URL` pointing to a disposable test database; they may reset their test schema. Never supply a live database URL. See backend test files for the accepted test-database naming guard. With no test database configured, integration suites are reported as skipped.
 
 Railway deployment configuration and commands are documented in [docs/deployment/railway.md](docs/deployment/railway.md). The public deployment upgrades the frontend to Next.js 15 / React 19 and pins patched PostCSS; review dependency advisories before future releases.
+
+## Automatic Railway releases
+
+Both Railway application services track `PuviwatS/fang-paep` on `main`. A push to `main` automatically rebuilds and deploys both frontend and backend from the repository root. Keep the shared npm lockfile committed; service-specific build commands select the correct workspace. See [deployment settings](docs/deployment/railway.md).
