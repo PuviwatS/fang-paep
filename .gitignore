@@ -1,7 +1,13 @@
-node_modules
-.next
+node_modules/
+.next/
+dist/
+coverage/
 next-env.d.ts
 *.tsbuildinfo
-
-# Local secrets
-.env*.local
+.env
+.env.*
+!.env.example
+!.env.*.example
+.omx/
+.superpowers/
+**/.next-smoke-cache/

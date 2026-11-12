@@ -1,4 +1,7 @@
-.next
-node_modules
+**/.next/
+**/node_modules/
+**/dist/
 package-lock.json
-src/data/songs.json
+frontend/src/data/songs.json
+backend/migrations/seeds/
+**/next-env.d.ts

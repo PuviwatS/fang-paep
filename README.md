@@ -1,159 +1,85 @@
-# ฟังแป๊บ — เกมทายเพลงไทย (v1)
+# Fang Paep — ฟังแป๊บ
 
-เกมแนว Songless สำหรับเพลงไทย ฟังท่อนสั้น 0.5 วินาที ทายผิดหรือกดข้ามจะได้ฟังยาวขึ้น
-(0.5 → 1 → 2 → 4 → 8 → 16 วินาที) รวม 6 ครั้ง
+Thai song guessing game: listen to progressively longer clips (0.5, 1, 2, 4, 8, 16 seconds), with six attempts per round.
 
-**v1 มีอะไรบ้าง**
+## Structure
 
-- เพลงประจำวัน 5 หมวด + โหมดสุ่มเล่นไม่จำกัด
-- ตรวจคำตอบที่เซิร์ฟเวอร์ (คำตอบไม่ถูกส่งไปที่เบราว์เซอร์จนกว่าจะจบรอบ)
-- สมัคร / เข้าสู่ระบบ / ลืมรหัสผ่าน ด้วย Supabase Auth (อีเมล + รหัสผ่าน)
-- สถิติเก็บบนเซิร์ฟเวอร์ ย้ายความคืบหน้าที่เล่นแบบ guest เข้าบัญชีให้อัตโนมัติ
-- อันดับรายวัน (เฉพาะคนที่ล็อกอินและเล่นสด)
-- สมาชิกพลัส: ไม่มีโฆษณา เล่นเกมย้อนหลัง ป้ายพลัสบนอันดับ — **ชำระเงินแบบทดสอบ (mock) ยังไม่ตัดเงินจริง**
-- พื้นที่โฆษณาเว้นไว้ (placeholder) ยังไม่ต่อ AdSense
+- `frontend/`: Next.js 15 App Router, React, TypeScript, CSS Modules, browser game logic and unit tests.
+- `backend/`: TypeScript Express API, PostgreSQL queries/functions, JWT authentication, email and database tools.
+- `backend/migrations/`: ordered, immutable SQL migrations (`initial_schema_1.sql`, `game_functions_2.sql`).
+- `backend/migrations/seeds/`: repeatable catalog and daily-puzzle seed SQL.
 
-## เริ่มต้น
+The browser calls same-origin `/api/*`; Next.js proxies those calls to Express. Database credentials and signing secrets stay in the backend. Supabase is no longer required by the application.
 
-ต้องใช้ Node.js 18.18 ขึ้นไป (แนะนำ 20 ตาม `.nvmrc`)
+## Local setup
 
-```bash
-npm install
-npm run dev        # http://localhost:3000
+Use Node.js 20 or later (`.nvmrc`) and PostgreSQL. From the repository root:
+
+```sh
+npm ci
 ```
 
-ไฟล์ `.env` มี URL และ publishable key ของ Supabase อยู่แล้ว (เป็นค่าสาธารณะ ปลอดภัยที่จะ commit)
-ถ้าจะใช้โปรเจกต์ Supabase ของตัวเอง ให้คัดลอก `.env.example` เป็น `.env.local` แล้วแก้ค่า
+Copy `backend/.env.example` to `backend/.env`. Set `DATABASE_URL` to a dedicated application database and set two different random JWT secrets of at least 32 characters. Generate each secret locally with `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`; never commit the output. Configure `RESEND_API_KEY` and a verified `MAIL_FROM` sender, or SMTP, for verification and password-reset email.
 
-## คำสั่งที่ใช้บ่อย
-
-| คำสั่ง              | ทำอะไร                     |
-| ------------------- | -------------------------- |
-| `npm run dev`       | รันเซิร์ฟเวอร์สำหรับพัฒนา  |
-| `npm run build`     | build สำหรับ production    |
-| `npm run lint`      | ตรวจโค้ดด้วย ESLint        |
-| `npm run typecheck` | ตรวจ type ด้วย TypeScript  |
-| `npm test`          | รัน unit test (Vitest)     |
-| `npm run format`    | จัดรูปแบบโค้ดด้วย Prettier |
-
-ก่อน push ควรผ่าน `npm run lint && npm run typecheck && npm test`
-
-## สถาปัตยกรรม
-
-```
-เบราว์เซอร์ (Next.js React)
-   │  fetch /api/*                      supabase.auth.* (login, signup)
-   ▼                                          │
-Next.js Route Handlers (Vercel)               │
-   │  supabase.rpc(...) ด้วย session ของผู้เล่น  │
-   ▼                                          ▼
-Supabase Postgres ──── ฟังก์ชัน SECURITY DEFINER (ตรวจคำตอบ, สถิติ, สมาชิก)
-                  └── ตารางทุกตัวเปิด RLS, ตารางคำตอบอ่านตรงไม่ได้เลย
+```sh
+npm run migrate
+npm run seed
+npm run refresh-previews --workspace backend
+npm run dev:backend
 ```
 
-- **ไม่ใช้ service role key ในเว็บ** ทุกอย่างวิ่งผ่านฟังก์ชันในฐานข้อมูลด้วยสิทธิ์ของผู้เล่นเอง
-- ฟังก์ชันช่วยอยู่ใน schema `private` ซึ่ง API เรียกตรงไม่ได้
-- เลขเกมนับตามเวลาไทย เกม #1 = 1 ต.ค. 2026
+In another terminal:
 
-## โครงสร้างโปรเจกต์
-
-```
-src/
-├── app/
-│   ├── layout.tsx              # Providers + header + footer + คอลัมน์กลางจอ
-│   ├── page.tsx                # หน้าเกม
-│   ├── login/ forgot/          # สมัคร / เข้าสู่ระบบ / ลืมรหัสผ่าน
-│   ├── account/                # โปรไฟล์ สมาชิก สถิติ และ account/password
-│   ├── pricing/ checkout/      # แพ็กเกจพลัส และหน้าชำระเงินทดสอบ (mock)
-│   ├── leaderboard/ archive/   # อันดับรายวัน และเกมย้อนหลัง (พลัส)
-│   ├── auth/callback/          # รับลิงก์จากอีเมลยืนยัน / รีเซ็ตรหัส
-│   └── api/                    # Route Handlers: songs, puzzle, guess, stats, leaderboard,
-│                               #   import-local, account, plans, subscription/{checkout,cancel,resume}
-├── components/
-│   ├── game/                   # หน้าเกม ไฟล์ละหนึ่ง component + CSS Module
-│   ├── layout/SiteHeader.tsx   # โลโก้ เมนู ปุ่มบัญชี
-│   ├── auth/RequireLogin.tsx   # หน้าไหนต้องล็อกอิน ห่อด้วยตัวนี้
-│   ├── providers/              # AuthProvider (user, account, isPlus), SongCatalogProvider
-│   ├── monetization/           # AdSlot (placeholder) และ PlusCard
-│   └── ui/                     # Page.module.css (สไตล์ร่วมของหน้าทั่วไป), SiteFooter
-├── hooks/
-│   ├── useDailyRound.ts        # เพลงประจำวัน: ทายผ่าน /api/guess
-│   ├── usePracticeRound.ts     # โหมดสุ่ม: ตรวจในเครื่อง
-│   ├── usePreview.ts, useAudioClip.ts, useFirstVisit.ts
-├── lib/
-│   ├── supabase/               # client ฝั่งเบราว์เซอร์ / เซิร์ฟเวอร์ / middleware + types
-│   ├── api/                    # types ของ API, zod schemas, error mapping, fetch client
-│   ├── daily.ts, scoring.ts, search.ts, storage.ts, format.ts, ...
-│   └── *.test.ts
-├── middleware.ts               # ต่ออายุ session ทุก request
-└── data/                       # songs.json / artists.json (สำรองถ้าโหลดจาก DB ไม่ได้ และใช้ทำ seed)
-supabase/
-├── migrations/                 # schema, functions, drop_preview_loader
-└── seed/                       # 01_catalog.sql, 02_daily_puzzles.sql (สร้างจาก scripts/generate-seed.ts)
-scripts/
-├── generate-seed.ts            # songs.json → SQL seed + ตารางเพลงประจำวันล่วงหน้า
-├── refresh-previews.ts         # อัปเดต URL เสียงจาก iTunes ลง song_previews (ต้องใช้ secret key)
-└── fetch_itunes.py             # ดึงรายชื่อเพลงของศิลปินเป็น CSV เพื่อคัดเพิ่ม
+```sh
+npm run dev
 ```
 
-## ฐานข้อมูล (Supabase)
+Open `http://localhost:3000`. Express defaults to port 4000. To override the backend proxy, copy `frontend/.env.example` to `frontend/.env.local` and set `API_INTERNAL_URL` (without `/api`). Set backend `FRONTEND_URL` to the browser origin. These origins must match for authenticated writes.
 
-| ตาราง                       | เก็บอะไร                                   | ใครอ่านได้       |
-| --------------------------- | ------------------------------------------ | ---------------- |
-| `artists`, `songs`          | คลังเพลง                                   | ทุกคน            |
-| `song_previews`             | URL เสียง iTunes                           | ฟังก์ชันเท่านั้น |
-| `daily_puzzles`             | เพลงคำตอบของแต่ละวัน/หมวด                  | ฟังก์ชันเท่านั้น |
-| `profiles`                  | ชื่อที่แสดง (สร้างอัตโนมัติตอนสมัคร)       | เจ้าของ          |
-| `game_results`              | ผลแต่ละรอบ (`live` / `archive` / `import`) | เจ้าของ          |
-| `player_stats`              | สถิติสรุปต่อหมวด                           | เจ้าของ          |
-| `plans`                     | แพ็กเกจพลัส                                | ทุกคน            |
-| `subscriptions`, `payments` | สถานะสมาชิกและประวัติชำระเงิน              | เจ้าของ          |
+Verification and password reset require working mail delivery. An unavailable mail provider returns an error; the app does not silently pretend to send email. Verification resends are supported. Tests inject a fake transport and never send real email.
 
-ฟังก์ชันที่เว็บเรียก: `get_puzzle`, `submit_guess`, `get_leaderboard`, `get_my_stats`, `import_local_games`,
-`get_my_account`, `update_display_name`, `mock_checkout`, `cancel_subscription`, `resume_subscription`
+## Commands
 
-### ตั้งค่า Supabase Auth (ต้องทำครั้งเดียว)
+| Root command            | Purpose                                       |
+| ----------------------- | --------------------------------------------- |
+| `npm run dev`           | Next.js development server                    |
+| `npm run dev:backend`   | Express development server with reload        |
+| `npm run build`         | Build both packages                           |
+| `npm start`             | Serve the built frontend                      |
+| `npm run start:backend` | Serve the compiled backend                    |
+| `npm test`              | Run both packages' unit and integration tests |
+| `npm run typecheck`     | TypeScript checks in both packages            |
+| `npm run lint`          | ESLint checks in both packages                |
+| `npm run format:check`  | Check Prettier formatting                     |
+| `npm run migrate`       | Apply pending SQL migrations                  |
+| `npm run seed`          | Load catalog and daily puzzles                |
 
-Dashboard → Authentication → URL Configuration
+Each package also supports its own commands, e.g. `npm test --workspace backend` and `npm run test:watch --workspace frontend`. Start both production processes; the Next.js build alone does not start Express.
 
-- **Site URL**: โดเมนจริงบน Vercel เช่น `https://fang-paep.vercel.app`
-- **Redirect URLs**: `https://fang-paep.vercel.app/**` และ `http://localhost:3000/**`
+## Authentication
 
-อีเมลที่ Supabase ส่งให้ฟรีจำกัดจำนวนต่อชั่วโมงต่ำมาก ก่อนเปิดจริงให้ต่อ SMTP เอง (เช่น Resend) ที่ Authentication → SMTP
+Register with email and password, verify the emailed link, then sign in. JWT access credentials are short-lived; refresh credentials rotate and can be revoked. Both travel in HTTP-only cookies through the API proxy. Password recovery uses expiring, one-use links. Password changes require the current password and revoke existing sessions. Verification/reset tokens and refresh credentials are hashed in PostgreSQL.
 
-### เพิ่มเพลง
+Set `NODE_ENV=production` behind HTTPS so auth cookies are Secure. Keep PostgreSQL accessible only to the backend; the backend database role must have the privileges needed by the supplied migrations/functions. Preserve certificate verification when configuring PostgreSQL TLS. Authentication writes are rate limited. Cookie-authenticated writes require the configured browser Origin (or matching Referer); foreign or missing origins are rejected.
 
-1. รัน `python scripts/fetch_itunes.py "ชื่อศิลปิน"` แล้วคัดเพลงลง `src/data/songs.json`
-2. รัน `npx -y tsx@4.19.2 --tsconfig tsconfig.json scripts/generate-seed.ts 730` เพื่อสร้าง SQL ใหม่
-3. รัน `supabase/seed/*.sql` ใน SQL Editor
-4. รัน `scripts/refresh-previews.ts` (ใส่ `SUPABASE_SECRET_KEY` ใน `.env.local` ก่อน) เพื่อโหลด URL เสียง
+Production startup also requires `TRUST_PROXY_CIDRS`, a comma-separated list of explicit proxy IPs/CIDRs, e.g. `127.0.0.1/32,::1/128` when the last proxy is local. Put Next.js and Express privately behind a trusted edge that **overwrites** `X-Forwarded-For` with the socket client IP. Next.js 14 preserves incoming forwarded headers and is not that sanitizing edge. Trust only actual proxy addresses; do not expose either service directly while trusting forwarded headers. Trust-all ranges and implicit hop counts are unsupported. Development defaults to no proxy trust, so local proxy traffic shares an IP rate bucket.
 
-## ระบบสมาชิก — ตอนนี้เป็นโหมดทดสอบ
+## Database changes and catalog maintenance
 
-`/checkout` ไม่มีฟอร์มบัตร กดปุ่มแล้วเซิร์ฟเวอร์เปิดพลัสให้ทันทีผ่านฟังก์ชัน `mock_checkout`
-ซึ่งทำงานได้เฉพาะตอน `private.settings.payments_mode = 'mock'` เท่านั้น
+Add a new SQL file with a unique ascending numeric suffix, e.g. `add_feature_3.sql`. Do not edit or remove applied files. The runner uses a checksum ledger, orders by numeric suffix, locks migration execution, and rolls back a failed migration. Seeds are separate and can be rerun without replacing existing puzzles.
 
-ก่อนเก็บเงินจริง:
+Catalog JSON remains in `frontend/src/data/`. After editing it, run `npm run generate-seed --workspace backend -- 730`, then `npm run seed`. Run `npm run refresh-previews --workspace backend` to populate or refresh daily audio URLs from iTunes; a fresh seed contains no preview URLs, and daily audio requires this step. The preview tool requires PostgreSQL credentials, not browser keys. Audio is streamed from Apple's preview URLs, with full-song links shown after a round.
 
-1. เลือกผู้ให้บริการ (Stripe หรือ Opn Payments / 2C2P ที่รองรับ PromptPay)
-2. เปลี่ยน `/api/subscription/checkout` ให้สร้าง checkout session ของผู้ให้บริการ
-3. เพิ่ม webhook route ที่ตรวจลายเซ็นแล้วบันทึกลง `subscriptions` และ `payments` ด้วย secret key ฝั่งเซิร์ฟเวอร์
-4. ตั้ง `payments_mode` เป็น `'live'` เพื่อปิด mock
-5. ราคาในตาราง `plans` (49 บาท/เดือน, 399 บาท/ปี) เป็นค่าตัวอย่าง แก้ได้ในตาราง
+## Feature and data boundaries
 
-## โฆษณา
+Daily games use Bangkok dates, with game #1 on October 1, 2026. Practice is unlimited. Daily answers stay on the server until a round finishes. Accounts retain progress, statistics and guest-game imports; imported games do not enter live leaderboards. Plus keeps archive access, ad suppression and subscription controls.
 
-`components/monetization/AdSlot.tsx` เป็นกล่องเว้นที่ไว้ (ซ่อนอัตโนมัติสำหรับสมาชิกพลัส)
-ตอนต่อ AdSense ให้ใส่สคริปต์ใน `layout.tsx` และเปลี่ยนเนื้อหาใน AdSlot เป็น `<ins class="adsbygoogle">`
+**Checkout is a mock:** it charges no money. The database's `payments_mode = 'mock'` setting enables it. Real payment processing is not part of this migration.
 
-## เรื่องเสียงและลิขสิทธิ์
+Existing Supabase data is not automatically transferred or deleted. Live cutover requires an authorized export, preserved user IDs/relationships, validated row counts, and a password-hash compatibility or password-reset strategy. Do not reset a production database to install this version.
 
-เว็บเล่น URL ตัวอย่างเสียง 30 วินาทีของ Apple โดยตรง ไม่ได้ดาวน์โหลดหรือเก็บไฟล์เพลงเอง
-และมีลิงก์ไปฟังเต็มเพลงบน Apple Music ในหน้าเฉลย
-ก่อนใส่โฆษณาหรือเก็บค่าสมาชิกจริง ต้องตรวจเงื่อนไขการใช้งานของ Apple ขอสิทธิ์จากค่ายเพลง/หน่วยงานจัดเก็บลิขสิทธิ์
-และควรปรึกษาทนายด้านทรัพย์สินทางปัญญา
+## Verification
 
-## Deploy
+Run tests, lint, typecheck, formatting and both builds before submitting changes. PostgreSQL integration tests require `TEST_DATABASE_URL` pointing to a disposable test database; they may reset their test schema. Never supply a live database URL. See backend test files for the accepted test-database naming guard. With no test database configured, integration suites are reported as skipped.
 
-ต่อ repo กับ Vercel แล้วกด Deploy ไม่ต้องตั้ง Environment Variables เพราะค่าสาธารณะอยู่ใน `.env` แล้ว
-(Hobby plan ของ Vercel ใช้ได้เฉพาะงานที่ไม่ใช่เชิงพาณิชย์ เมื่อเริ่มหารายได้ให้อัปเป็น Pro)
+Railway deployment configuration and commands are documented in [docs/deployment/railway.md](docs/deployment/railway.md). The public deployment upgrades the frontend to Next.js 15 / React 19 and pins patched PostCSS; review dependency advisories before future releases.

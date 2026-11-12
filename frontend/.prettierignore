@@ -1,0 +1,4 @@
+.next/
+node_modules/
+next-env.d.ts
+src/data/songs.json

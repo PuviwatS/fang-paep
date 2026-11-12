@@ -2,37 +2,40 @@
   "name": "fang-paep",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "dev": "npm run dev --workspace frontend",
+    "dev:backend": "npm run dev --workspace backend",
+    "build": "npm run build --workspaces",
+    "start": "npm start --workspace frontend",
+    "start:backend": "npm start --workspace backend",
+    "test": "npm test --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "lint": "npm run lint --workspaces",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
-  },
-  "dependencies": {
-    "@supabase/ssr": "0.12.7",
-    "@supabase/supabase-js": "2.117.2",
-    "next": "14.2.35",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "zod": "4.6.5"
+    "format:check": "prettier --check .",
+    "migrate": "npm run migrate --workspace backend",
+    "seed": "npm run seed --workspace backend"
   },
   "devDependencies": {
-    "@types/node": "20.14.10",
-    "@types/react": "18.3.3",
-    "@types/react-dom": "18.3.0",
-    "eslint": "8.57.1",
-    "eslint-config-next": "14.2.35",
-    "eslint-config-prettier": "9.1.0",
-    "prettier": "3.3.3",
-    "typescript": "5.5.3",
-    "vitest": "2.1.9"
+    "prettier": "3.3.3"
   },
   "engines": {
-    "node": ">=18.18"
+    "node": ">=20"
+  },
+  "overrides": {
+    "postcss": "8.5.32",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "next": {
+      "postcss": "8.5.32"
+    }
+  },
+  "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   }
 }
