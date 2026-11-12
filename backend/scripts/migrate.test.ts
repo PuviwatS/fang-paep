@@ -1,4 +1,5 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
@@ -29,6 +30,25 @@ describe.skipIf(!hasTestDatabase())("migrate", () => {
       await writeFile(path.join(directory, "initial_1.sql"), "CREATE TABLE first_table (id integer);\n");
       await migrate(pool, directory);
       await writeFile(path.join(directory, "initial_1.sql"), "CREATE TABLE first_table (id bigint);\n");
+      await expect(migrate(pool, directory)).rejects.toThrow("Applied migration changed");
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+  it("accepts legacy Windows line endings but still rejects a real SQL change", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "fangpap-migrations-"));
+    try {
+      const windowsSql = "CREATE TABLE line_ending_check (id integer);\r\n";
+      const filename = path.join(directory, "initial_1.sql");
+      await writeFile(filename, windowsSql);
+      await migrate(pool, directory);
+      await pool.query("UPDATE private.schema_migrations SET checksum=$1", [
+        createHash("sha256").update(windowsSql).digest("hex"),
+      ]);
+      await writeFile(filename, windowsSql.replace(/\r\n/g, "\n"));
+      await expect(migrate(pool, directory)).resolves.toBeUndefined();
+      expect((await pool.query("SELECT count(*) FROM private.schema_migrations")).rows[0].count).toBe("1");
+      await writeFile(filename, "CREATE TABLE line_ending_check (id bigint);\n");
       await expect(migrate(pool, directory)).rejects.toThrow("Applied migration changed");
     } finally {
       await rm(directory, { recursive: true, force: true });

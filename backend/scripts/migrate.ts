@@ -16,7 +16,7 @@ export async function loadMigrations(directory: string): Promise<Migration[]> {
       .filter((file) => migrationName.test(file))
       .map(async (name) => {
         const match = name.match(migrationName)!;
-        const sql = await readFile(path.join(directory, name), "utf8");
+        const sql = (await readFile(path.join(directory, name), "utf8")).replace(/\r\n/g, "\n");
         return {
           name,
           sequence: Number(match[2]),
@@ -51,7 +51,12 @@ export async function migrate(pool: Pool, directory: string): Promise<void> {
     for (const [index, prior] of applied.rows.entries()) {
       const current = files.get(prior.filename);
       if (!current) throw new Error(`Applied migration missing: ${prior.filename}`);
-      if (current.sequence !== prior.sequence || current.checksum !== prior.checksum)
+      // Older Windows deployments recorded CRLF checksums before normalization.
+      const legacyChecksum = createHash("sha256").update(current.sql.replace(/\n/g, "\r\n")).digest("hex");
+      if (
+        current.sequence !== prior.sequence ||
+        (current.checksum !== prior.checksum && legacyChecksum !== prior.checksum)
+      )
         throw new Error(`Applied migration changed: ${prior.filename}`);
       if (migrations[index]?.name !== prior.filename)
         throw new Error(`Applied migrations are out of order at ${prior.filename}`);
